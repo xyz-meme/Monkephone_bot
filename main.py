@@ -1,7 +1,9 @@
-# main.py
-
+ import logging
 from dotenv import load_dotenv
+load_dotenv()
+
 import os
+import random
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -10,11 +12,14 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
-import random
 
-# Load the environment variables from .env
-load_dotenv()
+# Enable logging
+logging.basicConfig(level=logging.INFO)
+
+# Bot token
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+if not BOT_TOKEN:
+    raise ValueError("❌ TELEGRAM_BOT_TOKEN is missing in environment variables!")
 
 # ----- Command: /start -----
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -40,7 +45,7 @@ async def call(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     await update.message.reply_text(random.choice(messages))
 
-# ----- Auto Welcome New Members -----
+# ----- Welcome New Members -----
 async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for member in update.message.new_chat_members:
         await update.message.reply_text(
@@ -48,7 +53,7 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='Markdown'
         )
 
-# ----- Keyword-Based Funny Replies -----
+# ----- Auto Reply -----
 async def auto_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_msg = update.message.text.lower()
     triggers = ["moon", "dump", "rug", "rekt", "paper", "scam", "gm", "gn"]
@@ -68,9 +73,8 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("rules", rules))
     app.add_handler(CommandHandler("call", call))
-
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, auto_reply))
 
-    print("🤖 MonkePhone Bot is now running...")
+    logging.info("🤖 MonkePhone Bot is now running...")
     app.run_polling()
